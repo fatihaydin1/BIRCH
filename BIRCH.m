@@ -1,7 +1,19 @@
 %% Remove the border instances
-function [ IA ] = BIRCH( X, Y, NumOfNeighbors )
+function [ IA ] = BIRCH( X, Y, varargin )
 
-    [idx, ~] = knnsearch(X, X, 'Distance', 'cityblock', 'K', NumOfNeighbors + 1);
+    narginchk(2, 3);
+    
+    if nargin == 2
+        param = struct;
+        param = setDefaultValues(param);
+    elseif nargin == 3
+        if ~isstruct(varargin{1})
+            error('The param must be a struct');
+        end
+        param = setDefaultValues(varargin{1});
+    end
+
+    [idx, ~] = knnsearch(X, X, 'Distance', param.DistanceMetric, 'K', param.NumOfNeighbors + 1);
     neighbours = Y(idx);
     % Set 1 if neighbors are in different classes, otherwise 0
     nn = (neighbours(:,1) ~= neighbours(:,2:end));
@@ -20,4 +32,21 @@ function [ IA ] = BIRCH( X, Y, NumOfNeighbors )
     
     % The difference of two sets
     IA = setdiff(A(:,1), B(:,1));
+end
+
+
+
+%% Set the parameters to their default values
+function [ param ] = setDefaultValues( param )
+
+    field = {'DistanceMetric', 'NumOfNeighbors'};
+    TF = isfield(param, field);
+    
+    if TF(1) == 0
+        param.DistanceMetric = 'cityblock';
+    end
+    
+    if TF(2) == 0
+        param.NumOfNeighbors = 1;
+    end
 end
