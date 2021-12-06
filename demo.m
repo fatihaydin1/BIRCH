@@ -7,9 +7,14 @@ dataset = load('electricity');
 fns = fieldnames(dataset);
 [ X, Y ] = divideTable( dataset.(fns{1}) );
 
-[ACC, R, T] = demo1(X, Y, 'KNN');
+param.DistanceMetric = 'euclidean';
+param.NumOfNeighbors = 1;
 
-[ idx, newX, newY ] = demo2( X, Y, 1 );
+[ACC, R, T] = demo1(X, Y, 'KNN', param);
+
+[ idx, newX, newY ] = demo2( X, Y, param );
+
+[ idx2, newX2, newY2 ] = demo3( X, Y );
 
 clear dataset;
 clear fns;
@@ -17,7 +22,7 @@ clear fns;
 
 
 %%
-function [ACC, R, T] = demo1( X, Y, classifier )
+function [ACC, R, T] = demo1( X, Y, classifier, param )
 
     predictions = repmat(Y, 1, 2);
     indices = crossvalind('Kfold', Y, 10);
@@ -34,7 +39,7 @@ function [ACC, R, T] = demo1( X, Y, classifier )
         testX = X(test,:);
         
         tic;
-        idx = BIRCH(trainX, trainY, 1);
+        idx = BIRCH(trainX, trainY, param);
         T(i) = toc;
         newTrainX = trainX(idx, :);
         newTrainY = trainY(idx);
@@ -66,12 +71,23 @@ end
 
 
 %%
-function [ idx, newX, newY ] = demo2( X, Y, nn )
+function [ idx, newX, newY ] = demo2( X, Y, param )
 
-    idx = BIRCH(X, Y, nn);
+    idx = BIRCH(X, Y, param);
     newX = X(idx, :);
     newY = Y(idx);
 end
+
+
+
+%%
+function [ idx, newX, newY ] = demo3( X, Y )
+
+    idx = BIRCH(X, Y);
+    newX = X(idx, :);
+    newY = Y(idx);
+end
+
 
 
 %% Separate the dataset into the input matrix and the output vector
