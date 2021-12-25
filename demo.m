@@ -1,4 +1,4 @@
-%% Demo for the BIRCH algorithm
+%% Demos for the BIRCH algorithm
 clc;
 clear;
 
@@ -10,11 +10,11 @@ fns = fieldnames(dataset);
 param.DistanceMetric = 'euclidean';
 param.NumOfNeighbors = 1;
 
-[ACC, R, T] = demo1(X, Y, 'KNN', param);
+ACC = demo1(X, Y, 'KNN', param);
 
-[ idx, newX, newY ] = demo2( X, Y, param );
+[ idx, newX, newY, R, T ] = demo2( X, Y, param );
 
-[ idx2, newX2, newY2 ] = demo3( X, Y );
+[ idx2, newX2, newY2, R2, T2 ] = demo3( X, Y );
 
 clear dataset;
 clear fns;
@@ -22,12 +22,10 @@ clear fns;
 
 
 %%
-function [ACC, R, T] = demo1( X, Y, classifier, param )
+function [ ACC ] = demo1( X, Y, classifier, param )
 
     predictions = repmat(Y, 1, 2);
     indices = crossvalind('Kfold', Y, 10);
-    R = zeros(10,1);
-    T = zeros(10,1);
         
     for i = 1:10
         fprintf('%d',i);
@@ -38,9 +36,7 @@ function [ACC, R, T] = demo1( X, Y, classifier, param )
         trainX = X(train,:);
         testX = X(test,:);
         
-        tic;
         idx = BIRCH(trainX, trainY, param);
-        T(i) = toc;
         newTrainX = trainX(idx, :);
         newTrainY = trainY(idx);
 
@@ -60,32 +56,39 @@ function [ACC, R, T] = demo1( X, Y, classifier, param )
                 Mdl = fitcecoc(newTrainX, newTrainY, 'Learners', t);
                 predictions(test, 2) = predict(Mdl, testX);
         end
-        R(i) = size(newTrainX,1);
         predictions(test, 2) = predict(Mdl, testX);
     end
     ACC = sum(predictions(:,1) == predictions(:,2))*100/length(Y);
-    R = 100 - (mean(R)*100/length(Y));
-    T = sum(T);
 end
 
 
 
 %%
-function [ idx, newX, newY ] = demo2( X, Y, param )
+function [ idx, newX, newY, R, T ] = demo2( X, Y, param )
 
+    m = numel(Y);
+    tic;
     idx = BIRCH(X, Y, param);
+    T = toc; % Running time
     newX = X(idx, :);
     newY = Y(idx);
+    % Calculate the reduction rate
+    R = (m - numel(idx))*100/m;
 end
 
 
 
 %%
-function [ idx, newX, newY ] = demo3( X, Y )
+function [ idx, newX, newY, R, T ] = demo3( X, Y )
 
+    m = numel(Y);
+    tic;
     idx = BIRCH(X, Y);
+    T = toc;
     newX = X(idx, :);
     newY = Y(idx);
+    % Calculate the reduction rate
+    R = (m - numel(idx))*100/m;
 end
 
 
